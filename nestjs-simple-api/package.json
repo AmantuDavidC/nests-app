@@ -1,0 +1,27 @@
+{
+  "name": "nestjs-simple-api",
+  "version": "1.0.0",
+  "description": "Simple NestJS API for CE Team Training",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "start:dev": "ts-node src/main.ts",
+    "start:prod": "node dist/main.js"
+  },
+  "keywords": ["nestjs", "api", "training"],
+  "author": "Cloud Engineering Team",
+  "license": "ISC",
+  "dependencies": {
+    "@nestjs/common": "^11.1.12",
+    "@nestjs/core": "^11.1.12",
+    "@nestjs/platform-express": "^11.1.12",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
