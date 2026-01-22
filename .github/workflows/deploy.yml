@@ -1,0 +1,49 @@
+name: Deploy NestJS API
+
+on:
+  push:
+    branches: [ main ]  # Trigger on push to main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install & Build
+        run: |
+          npm install
+          npm run build
+
+      - name: Deploy to Huawei Cloud via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # 1. Define Version (Using GitHub Run Number for uniqueness)
+            VERSION="v${{ github.run_number }}"
+            APP_DIR="/var/www/nestjs-api"
+            RELEASE_DIR="$APP_DIR/releases/$VERSION"
+
+            # 2. Create new release directory
+            mkdir -p $RELEASE_DIR
+
+            # 3. Transfer files (Simulated here via git clone for simplicity, or use scp-action)
+            cd $RELEASE_DIR
+            git clone https://github.com/${{ github.repository }}.git .
+            npm install --production
+            npm run build
+
+            # 4. Atomic Switch (The Rollback Secret)
+            ln -sfn $RELEASE_DIR $APP_DIR/current
+
+            # 5. Restart Application
+            pm2 restart nestjs-api || pm2 start $APP_DIR/current/dist/main.js --name "nestjs-api"
