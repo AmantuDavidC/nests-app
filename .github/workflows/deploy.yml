@@ -2,11 +2,15 @@ name: Deploy NestJS API
 
 on:
   push:
-    branches: [ main ]  # Trigger on push to main
+    branches: [ main ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./nestjs-simple-api
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -15,11 +19,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: './nestjs-simple-api/package-lock.json'
 
-      - name: Install & Build
-        run: |
-          npm install
-          npm run build
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Application
+        run: npm run build
 
       - name: Deploy to Huawei Cloud via SSH
         uses: appleboy/ssh-action@master
@@ -28,22 +35,34 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # 1. Define Version (Using GitHub Run Number for uniqueness)
-            VERSION="v${{ github.run_number }}"
+            # 1. Setup Variables
             APP_DIR="/var/www/nestjs-api"
+            VERSION="v${{ github.run_number }}"
             RELEASE_DIR="$APP_DIR/releases/$VERSION"
 
-            # 2. Create new release directory
+            echo "Deploying Version: $VERSION"
+
+            # 2. Create the new release directory
             mkdir -p $RELEASE_DIR
 
-            # 3. Transfer files (Simulated here via git clone for simplicity, or use scp-action)
+            # 3. Pull the code from GitHub directly to the server
+            # We do this to ensure the server has the source for the build
             cd $RELEASE_DIR
             git clone https://github.com/${{ github.repository }}.git .
+
+            # 4. Install and Build on the server
+            # Note: We navigate into the subfolder identified in your screenshot
+            cd nestjs-simple-api
             npm install --production
             npm run build
 
-            # 4. Atomic Switch (The Rollback Secret)
-            ln -sfn $RELEASE_DIR $APP_DIR/current
+            # 5. Atomic Switch (The Rollback Secret)
+            # This points the 'current' symlink to the new version's dist folder
+            ln -sfn $RELEASE_DIR/nestjs-simple-api $APP_DIR/current
 
-            # 5. Restart Application
+            # 6. Restart the application using PM2
+            # We point PM2 to the 'current' symlink so it always runs the latest version
             pm2 restart nestjs-api || pm2 start $APP_DIR/current/dist/main.js --name "nestjs-api"
+
+            # 7. Cleanup (Optional: keep only the last 5 versions to save space)
+            cd $APP_DIR/releases && ls -t | tail -n +6 | xargs rm -rf --

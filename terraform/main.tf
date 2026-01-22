@@ -58,6 +58,16 @@ resource "huaweicloud_networking_secgroup_rule" "allow_https" {
   remote_ip_prefix = "0.0.0.0/0"
 }
 
+resource "huaweicloud_networking_secgroup_rule" "allow_nestjs" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 3000
+  port_range_max    = 3000
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = huaweicloud_networking_secgroup.secgroup.id
+}
+
 # Get Ubuntu Image
 data "huaweicloud_images_image" "ubuntu" {
   name        = "Ubuntu 22.04 server 64bit"
