@@ -18,7 +18,7 @@ let AppService = class AppService {
             timestamp: new Date().toISOString(),
             uptime: process.uptime(),
             service: 'nestjs-simple-api',
-            version: '2.0.0',
+            version: '1.0.0',
         };
     }
     getAbout() {

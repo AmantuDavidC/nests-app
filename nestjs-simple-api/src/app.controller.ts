@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+git rm -r --cached nestjs-simple-api zimport { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
 
 @Controller()
